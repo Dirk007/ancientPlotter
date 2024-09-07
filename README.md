@@ -2,7 +2,7 @@
 
 This repository is a work in progress to revive a COGI CT-630 (and all its OEM-Name-Clones) serial Plotter.
 
-I've found some true and untrue informations as well as some Python-software in the web, however the found software always enforced me to painfully deal with the Python dependencies on MacOS. So I assembled what needed to be done and wrote this little tool. Thanks to the past Python developers to discover the CT-630 endsequence-codes and publishing them on the web.
+I've found some true and untrue informations as well as some Python-software in the web, however the found software always enforced me to painfully deal with the Python dependencies on MacOS. So I assembled what needed to be done and wrote this little tool. Thanks to the past [Python developers to discover the CT-630 endsequence-codes](https://gitli.stratum0.org/chrissi/cogidraw/-/blob/master/cogidraw.py?ref_type=heads#L58) and publishing them on the web.
 
 ## Additional motivation
 
