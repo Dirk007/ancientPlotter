@@ -1,0 +1,34 @@
+<html>
+    <head>
+        <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+        <script src="https://unpkg.com/htmx.org@1.9.12/dist/ext/ws.js"></script>
+        <link rel="stylesheet" href="styles.css">
+    </head>
+<body>
+
+<div id="tophead">AncientPlotter</div>
+
+<div hx-ext="ws" ws-connect="/ws"></div>
+
+    <div id="alive">🤔 unknown</div>
+
+    <div id="wrapper">
+        <div id="uploadform" hx-get="/upload.html" hx-trigger="load">
+        </div>
+        
+        <div id="outerstatus">
+            <div id="statustext">Plot Job-Status:</div>
+            <div id="stats">
+                <div id="jobstatuspercent">0/0</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="log">
+    Log:
+    <p id="notifications"></p>
+    </div>
+
+</div>
+</body>
+</html>

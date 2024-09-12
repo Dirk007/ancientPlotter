@@ -1,0 +1,15 @@
+<div hx-swap-oob='innerHTML:#uploadform'>
+    <img src="/images/hourglass.gif" style="padding-top: 60px; width: 80px; height: 80px; float: right;">
+    <div id="phead">
+         Plot getstartet....
+    </div>
+    <div style="font-style: italic;">
+    Wenn der Job durch ist, oder wenn abgebrochen werden soll, bitte STOP drücken.
+    </div>
+    <form>
+        <input type="hidden" name="job_id" value="{{ .jobID }}"/>
+        <button type="submit" hx-post="/action/stop">
+            ✋ STOP
+        </button>
+    </form>
+</div>

@@ -1,6 +1,8 @@
 package feeder
 
 import (
+	"context"
+	"encoding/json"
 	"errors"
 	"strings"
 	"time"
@@ -13,28 +15,48 @@ const (
 	DefaultBackoff  = 100 * time.Millisecond
 )
 
+var _ json.Marshaler = Stats{}
+
+type Stats struct {
+	JobID        string
+	FatalError   string
+	Line         int
+	Total        int
+	CurrentTry   int
+	CurrentTotal int
+	CurrentRest  int
+}
+
+func (s Stats) MarshalJSON() ([]byte, error) {
+	return json.Marshal(map[string]any{
+		"line":          s.Line,
+		"total":         s.Total,
+		"current_try":   s.CurrentTry,
+		"current_total": s.CurrentTotal,
+		"current_rest":  s.CurrentRest,
+	})
+}
+
 type (
 	WriterFn = func(s string) (written int, err error)
-	StatFn   = func(line int, total int, currentTry int, currentTotal int, currentRest int) (err error)
+	StatFn   = func(stats Stats) (err error)
 )
 
 type Feeder struct {
 	maxTries int
 	backoff  time.Duration
+	jobID    string
 }
 
-func New(maxTries int, backoff time.Duration) *Feeder {
+func New(maxTries int, backoff time.Duration, jobID string) *Feeder {
 	return &Feeder{
 		maxTries: maxTries,
 		backoff:  backoff,
+		jobID:    jobID,
 	}
 }
 
-func Default() *Feeder {
-	return New(DefaultMaxTries, DefaultBackoff)
-}
-
-func (f *Feeder) Feed(writeFn WriterFn, instructions []string, statFn StatFn) error {
+func (f *Feeder) Feed(ctx context.Context, writeFn WriterFn, instructions []string, statFn StatFn) error {
 	for index, instruction := range instructions {
 		instruction := strings.TrimSpace(instruction)
 		if len(instruction) == 0 {
@@ -55,7 +77,18 @@ func (f *Feeder) Feed(writeFn WriterFn, instructions []string, statFn StatFn) er
 			if rest < 0 {
 				return errors.New("write overflow. Written more bytes than feeded. Can not continue")
 			}
-			if err = statFn(index+1, len(instructions), tries, total, rest); err != nil {
+			stats := Stats{
+				JobID:        f.jobID,
+				Line:         index + 1,
+				Total:        len(instructions),
+				CurrentTry:   tries,
+				CurrentTotal: total,
+				CurrentRest:  rest,
+			}
+			if err = statFn(stats); err != nil {
+				return err
+			}
+			if err = ctx.Err(); err != nil {
 				return err
 			}
 			if rest == 0 {
