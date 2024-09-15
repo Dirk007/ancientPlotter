@@ -33,9 +33,9 @@ func NewPlotJob(path string) *PlotJob {
 	}
 }
 
-func getWriterFor(config *JobConfig, deps *ContextDependencies) (feeder.WriterFn, error) {
+func getWriterFor(config *JobConfig, deps *ContextDependencies) (serial.Writer, error) {
 	if config.PrintOnly {
-		return serial.PrintConsole, nil
+		return &serial.ConsoleWriter{}, nil
 	}
 
 	var portName string
@@ -55,7 +55,7 @@ func getWriterFor(config *JobConfig, deps *ContextDependencies) (feeder.WriterFn
 	if err != nil {
 		return nil, err
 	}
-	return serialWriter.Write, nil
+	return serialWriter, nil
 }
 
 func sendErrorStat(deps *ContextDependencies, err error) {
@@ -80,7 +80,7 @@ func (j PlotJob) Run(ctx context.Context, deps *ContextDependencies, config JobC
 		return err
 	}
 
-	writeFn, err := getWriterFor(&config, deps)
+	writer, err := getWriterFor(&config, deps)
 	if err != nil {
 		sendErrorStat(deps, err)
 		return err
@@ -99,8 +99,8 @@ func (j PlotJob) Run(ctx context.Context, deps *ContextDependencies, config JobC
 		return err
 	}
 
-	defaultFeeder := feeder.New(feeder.DefaultMaxTries, feeder.DefaultBackoff, j.ID)
-	err = defaultFeeder.Feed(ctx, writeFn, normalized, func(stat feeder.Stats) error {
+	defaultFeeder := feeder.New(feeder.DefaultMaxTries, feeder.DefaultBackoff, j.ID, writer)
+	err = defaultFeeder.Feed(ctx, normalized, func(stat feeder.Stats) error {
 		deps.Stats.Broadcast(context.Background(), stat)
 		return nil
 	})

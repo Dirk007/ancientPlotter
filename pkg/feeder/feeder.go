@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Dirk007/ancientPlotter/pkg/serial"
 	"github.com/sirupsen/logrus"
 )
 
@@ -25,25 +26,63 @@ type Stats struct {
 }
 
 type (
-	WriterFn = func(s string) (written int, err error)
-	StatFn   = func(stats Stats) (err error)
+	StatFn = func(stats Stats) (err error)
 )
 
 type Feeder struct {
 	maxTries int
 	backoff  time.Duration
 	jobID    string
+	writer   serial.Writer
 }
 
-func New(maxTries int, backoff time.Duration, jobID string) *Feeder {
+func New(maxTries int, backoff time.Duration, jobID string, writer serial.Writer) *Feeder {
 	return &Feeder{
 		maxTries: maxTries,
 		backoff:  backoff,
 		jobID:    jobID,
+		writer:   writer,
 	}
 }
 
-func (f *Feeder) Feed(ctx context.Context, writeFn WriterFn, instructions []string, statFn StatFn) error {
+func (f *Feeder) WriteInstruction(ctx context.Context, instruction string, statFn StatFn, currentStats *Stats) error {
+	rest := len(instruction)
+	total := len(instruction)
+	tries := 0
+	stats := *currentStats
+	for {
+		tries++
+		written, err := f.writer.Write(instruction)
+		if err != nil {
+			return err
+		}
+		rest -= written
+		if rest < 0 {
+			return errors.New("write overflow. Written more bytes than feeded. Can not continue")
+		}
+
+		stats.CurrentTry = tries
+		stats.CurrentTotal = total
+		stats.CurrentRest = rest
+		if err = statFn(stats); err != nil {
+			return err
+		}
+		if err = ctx.Err(); err != nil {
+			return err
+		}
+		if rest == 0 {
+			break
+		}
+		instruction = instruction[written:]
+		time.Sleep(f.backoff)
+		if tries >= f.maxTries {
+			return errors.New("failed to send instruction after maximum tries")
+		}
+	}
+	return nil
+}
+
+func (f *Feeder) Feed(ctx context.Context, instructions []string, statFn StatFn) error {
 	for index, instruction := range instructions {
 		instruction := strings.TrimSpace(instruction)
 		if len(instruction) == 0 {
@@ -51,41 +90,15 @@ func (f *Feeder) Feed(ctx context.Context, writeFn WriterFn, instructions []stri
 			continue
 		}
 		instruction += ";"
-		rest := len(instruction)
-		total := len(instruction)
-		tries := 0
-		for {
-			tries++
-			written, err := writeFn(instruction)
-			if err != nil {
-				return err
-			}
-			rest -= written
-			if rest < 0 {
-				return errors.New("write overflow. Written more bytes than feeded. Can not continue")
-			}
-			stats := Stats{
-				JobID:        f.jobID,
-				Line:         index + 1,
-				Total:        len(instructions),
-				CurrentTry:   tries,
-				CurrentTotal: total,
-				CurrentRest:  rest,
-			}
-			if err = statFn(stats); err != nil {
-				return err
-			}
-			if err = ctx.Err(); err != nil {
-				return err
-			}
-			if rest == 0 {
-				break
-			}
-			instruction = instruction[written:]
-			time.Sleep(f.backoff)
-			if tries >= f.maxTries {
-				return errors.New("failed to send instruction after maximum tries")
-			}
+
+		stats := Stats{
+			JobID: f.jobID,
+			Line:  index + 1,
+			Total: len(instructions),
+		}
+
+		if err := f.WriteInstruction(ctx, instruction, statFn, &stats); err != nil {
+			return err
 		}
 	}
 	return nil
