@@ -18,12 +18,12 @@ const defaultPort = 11175
 var contextDeps = jobs.NewContextDependencies()
 
 type config struct {
-	DryRun       bool    `clap:"--dry-run,d"`
-	PrintOnly    bool    `clap:"--print-only,p"`
-	SerialDevice *string `clap:"--serial-device,s"`
-	Filename     string  `clap:"--filename,f,mandatory"`
-	Serve        bool    `clap:"--serve,S"`
-	Port         int     `clap:"--port,P"`
+	DryRun       bool     `clap:"--dry-run,d"`
+	PrintOnly    bool     `clap:"--print-only,p"`
+	SerialDevice *string  `clap:"--serial-device,s"`
+	Serve        bool     `clap:"--serve,S"`
+	Port         int      `clap:"--port,P"`
+	Filenames    []string `clap:"trailing"`
 }
 
 func spinUpLogPrinter(ctx context.Context) {
@@ -112,8 +112,12 @@ func main() {
 		wg.Wait()
 	}
 
+	if len(config.Filenames) == 0 {
+		errorExit(fmt.Errorf("no input files provided"))
+	}
+
 	go func() {
-		job := jobs.NewPlotJob(config.Filename)
+		job := jobs.NewPlotJob(config.Filenames[0])
 		job.Run(ctx, contextDeps, jobs.JobConfig{
 			DryRun:       config.DryRun,
 			PrintOnly:    config.PrintOnly,
