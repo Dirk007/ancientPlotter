@@ -46,11 +46,25 @@ go will hopefully download all dependencies and place you a nice `ancientPlotter
 
 ## Usage
 
-`ancientPlotter [--serial-device <device>] [--dry-run] [--print-only] --filename <filename.hpgl>`
+`ancientPlotter [--serial-device <device>] [--dry-run] [--print-only] [--serve] [--port <port> (default 11175)] filename.hpgl`
+
+`--serve`
+
+Spin up this tool as a backend serving the required HTML and Websockets to drive your plotter.
+
+You can reach the service by invoking http://127.0.0.1:11175/ (or whatever port you assigned). The documents will be served from [assets](./assets/). You can modify them at will *at runtime*. They will be freshly read and rendered on each onvocation.
+
+Please don't blame me for the bad quality - I am everything but a frontend engineer.
+
+`--port`
+
+If you specifiy this parameter and also use the `--serve` option, the default port `11175` will be overriden with this value.
 
 `--filename`
 
-The only required parameter specifies which file you want to plot. The path can be absolute or relative - it does not matter.
+The only required parameter if you use this tool as a CLI, specifies which file you want to plot. The path can be absolute or relative - it does not matter. If you `serve` this parameter will simply be ignored.
+
+Ony the first given file will be plotted.
 
 `--serial-device`
 
