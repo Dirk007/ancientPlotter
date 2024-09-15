@@ -2,7 +2,6 @@ package feeder
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"strings"
 	"time"
@@ -15,8 +14,6 @@ const (
 	DefaultBackoff  = 100 * time.Millisecond
 )
 
-var _ json.Marshaler = Stats{}
-
 type Stats struct {
 	JobID        string
 	FatalError   string
@@ -25,16 +22,6 @@ type Stats struct {
 	CurrentTry   int
 	CurrentTotal int
 	CurrentRest  int
-}
-
-func (s Stats) MarshalJSON() ([]byte, error) {
-	return json.Marshal(map[string]any{
-		"line":          s.Line,
-		"total":         s.Total,
-		"current_try":   s.CurrentTry,
-		"current_total": s.CurrentTotal,
-		"current_rest":  s.CurrentRest,
-	})
 }
 
 type (
