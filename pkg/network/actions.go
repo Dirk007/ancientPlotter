@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Dirk007/ancientPlotter/pkg/jobs"
 	"github.com/labstack/echo"
 )
 
@@ -21,22 +22,19 @@ func handleStartJob(c echo.Context) error {
 		return err
 	}
 
+	if job.State == jobs.JobStateWorking {
+		return echo.NewHTTPError(http.StatusConflict, "Job is already working")
+	}
+
+	if err = depContext.Jobs.UpdateState(jobID, jobs.JobStateWorking); err != nil {
+		return err
+	}
+
 	depContext.Logs.Broadcast(context.Background(), fmt.Sprintf("Starting job: %+v", job))
 
 	ctx, cancel := context.WithCancel(context.Background())
 	job.Cancel = &cancel
 	go job.Run(ctx, depContext.ContextDependencies, depContext.Config)
-
-	// m := map[string]any{
-	// 	"job":      job,
-	// 	"datetime": fmtDateTime(time.Now()),
-	// 	"config":   depContext.Config,
-	// }
-
-	// line, err := RenderTemplate("onstarted", m)
-	// if err != nil {
-	// 	return err
-	// }
 
 	return nil
 }
