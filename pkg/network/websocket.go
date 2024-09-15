@@ -47,13 +47,13 @@ func handleLog(ws *websocket.Conn, log string) error {
 }
 
 func handleStat(ws *websocket.Conn, stat feeder.Stats) error {
-	if stat.FatalError != "" {
-		line, err := RenderTemplate("onerror", map[string]string{"error": stat.FatalError})
+	if stat.FatalError != nil {
+		line, err := RenderTemplate("onerror", map[string]string{"error": stat.FatalError.Error()})
 		if err != nil {
 			return err
 		}
 		err = websocket.Message.Send(ws, line)
-		_ = handleLog(ws, "!!!!! ERROR: "+stat.FatalError)
+		_ = handleLog(ws, fmt.Sprintf("!!!!! ERROR: %+v", stat.FatalError))
 		return err
 	}
 

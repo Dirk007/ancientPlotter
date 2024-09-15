@@ -60,7 +60,7 @@ func getWriterFor(config *JobConfig, deps *ContextDependencies) (feeder.WriterFn
 
 func sendErrorStat(deps *ContextDependencies, err error) {
 	stat := feeder.Stats{
-		FatalError:   err.Error(),
+		FatalError:   err,
 		Total:        0,
 		Line:         0,
 		CurrentTry:   0,

@@ -16,7 +16,7 @@ const (
 
 type Stats struct {
 	JobID        string
-	FatalError   string
+	FatalError   error
 	Line         int
 	Total        int
 	CurrentTry   int
