@@ -7,6 +7,8 @@ import (
 	hwserial "go.bug.st/serial"
 )
 
+var _ Writer = &SerialWriter{}
+
 const (
 	DefaultCT630Baud = 9600
 	DefaultCT630Bits = 8

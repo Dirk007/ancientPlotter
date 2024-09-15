@@ -1,0 +1,92 @@
+body {
+    font-family: verdana, arial, helvetica, sans-serif;
+    font-size: 0.8em;
+    background-color: #666666;
+    padding: 10px;
+}
+
+#tophead {
+    font-family: fantasy;
+    font-size: xx-large;
+    background-color: transparent;
+    color: white;
+    padding: 10px;
+    align-items: center;
+    width: 100%;
+    text-align: center;
+    margin: 2%;
+}
+
+#phead {
+    font-size: large;
+    font-weight: bold;
+    padding-bottom: 20px;
+}
+
+#uploadform {
+    padding: 10px;
+    background-color: azure;
+    height: 25%;
+    flex: 0 0 65%;
+    border-top-left-radius: 10px;
+    border-bottom-left-radius: 10px;
+}
+
+#wrapper {
+    display: flex;
+}
+
+#outerstatus {
+    flex: 1;
+    background-color: cadetblue;
+    padding: 20px;
+    width: 25%;
+    color: white;
+    border-top-right-radius: 10px;
+    border-bottom-right-radius: 10px;
+}
+
+#statustext {
+    padding-bottom: 10px;
+}
+
+#stats {
+    color: black;
+    background-color: white;
+    height: 20px;
+    width: 100%;
+    padding: 0px;
+    border-style: solid;
+    border-width: 1%;
+    border-radius: 10px;
+}
+
+#error {
+    color: #FF5555;
+}
+
+#jobstatuspercent {
+    height: 100%;
+    background-color: aqua;
+    width: 0%;
+}
+
+#alive {
+    margin-bottom: 10px;
+    background-color: lightgray;
+    color: black;
+    border-radius: 10px;
+    padding: 4px;
+}
+
+#log {
+    border-color: black;
+    border-width: 2px;
+    opacity: 40%;
+    background-color: #444444;
+    color: white;
+    margin-top: 20px;
+    padding: 10px;
+    font-family: monospace;
+    border-radius: 10px;
+}

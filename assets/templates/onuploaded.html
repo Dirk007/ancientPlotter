@@ -1,0 +1,15 @@
+<div hx-swap-oob='innerHTML:#uploadform'>
+    <div id="phead">
+        Datei {{.file.Filename}} als {{.job.ID}} hochgeladen 👍.
+    </div>
+    
+    <div style="font-style: italic;">
+        Starten?
+    </div>
+    <form>
+        <input type="hidden" name="job_id" value="{{.job.ID}}"/>
+        <button type="submit" hx-post="/action/start">
+            Start!
+        </button>
+    </form>
+</div>
