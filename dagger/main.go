@@ -86,6 +86,7 @@ func (*AncientPlotter) Publish(ctx context.Context,
 		// wrap the output directory in the new empty container marked with the same platform
 		binaryCtr := dag.Container(dagger.ContainerOpts{Platform: platform}).
 			WithRootfs(outputDir).
+			WithDirectory("/assets", src.Directory("/assets")).
 			WithEntrypoint([]string{"/ancientplotter"})
 
 		platformVariants = append(platformVariants, binaryCtr)

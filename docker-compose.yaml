@@ -1,0 +1,7 @@
+services:
+  ancientplotter:
+    image: dirkfaust/ancientplotter:1.1.0
+    command: /ancientplotter --serve
+    ports:
+      - "8000:11175"
+    restart: unless-stopped
