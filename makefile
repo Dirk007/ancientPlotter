@@ -20,4 +20,4 @@ all: clean directories
 	@$(all_build)
 
 daggerbuild:
-	dagger call build --src=. 
+	dagger call build --src=. export --path=.
