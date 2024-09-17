@@ -18,3 +18,6 @@ clean:
 all: clean directories
 	@echo "Building for $(ARCH) on $(OS)"
 	@$(all_build)
+
+daggerbuild:
+	dagger call build --src=. 
