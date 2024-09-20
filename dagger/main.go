@@ -60,9 +60,6 @@ func (*AncientPlotter) Publish(ctx context.Context,
 		"linux/arm64",
 	}
 
-	// container registry for the multi-platform image
-	imageRepo := fmt.Sprintf("%s:%s", Registry, Version)
-
 	platformVariants := make([]*dagger.Container, 0, len(platforms))
 	for _, platform := range platforms {
 		temp := strings.Split(string(platform), "/")
@@ -79,20 +76,36 @@ func (*AncientPlotter) Publish(ctx context.Context,
 			WithEnvVariable("GOOS", "linux").
 			WithEnvVariable("GOARCH", platformArch).
 			WithWorkdir("/src").
-			WithExec([]string{"go", "build", "-o", "/bin/ancientplotter", "-ldflags", "-s -w"})
+			WithExec([]string{"go", "build", "-o", "/plotter/ancientplotter", "-ldflags", "-s -w"})
 
-		outputDir := ctr.Directory("/bin")
+		outputDir := ctr.Directory("/plotter")
 
 		// wrap the output directory in the new empty container marked with the same platform
+		// binaryCtr := dag.Container(dagger.ContainerOpts{Platform: platform}).
+		// 	WithRootfs(outputDir).
+		// 	WithDirectory("/assets", src.Directory("/assets")).
+		// 	WithEntrypoint([]string{"/ancientplotter"})
+
 		binaryCtr := dag.Container(dagger.ContainerOpts{Platform: platform}).
-			WithRootfs(outputDir).
-			WithDirectory("/assets", src.Directory("/assets")).
-			WithEntrypoint([]string{"/ancientplotter"})
+			From("alpine:3.20").
+			WithExec([]string{
+				"apk", "update",
+			}).
+			WithExec([]string{
+				"apk", "add", "inkscape", "python3", "py3-lxml", "py3-cssselect", "py3-numpy",
+			}).
+			WithDirectory("/plotter", outputDir).
+			WithDirectory("/plotter/assets", src.Directory("assets")).
+			WithEntrypoint([]string{"/plotter/ancientplotter", "--serve"}).
+			WithWorkdir("/plotter").
+			WithExposedPort(11175)
 
 		platformVariants = append(platformVariants, binaryCtr)
 	}
 
 	// publish to registry
+	// container registry for the multi-platform image
+	imageRepo := fmt.Sprintf("%s:%s", Registry, Version)
 	imageDigest, err := dag.Container().
 		WithRegistryAuth("docker.io", actor, token).
 		Publish(ctx, imageRepo, dagger.ContainerPublishOpts{

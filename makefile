@@ -21,3 +21,6 @@ all: clean directories
 
 daggerbuild:
 	dagger call build --src=. export --path=.
+
+dockerbuild:
+	docker build -t dirkfaust/ancientplotter:1.1.0 .
