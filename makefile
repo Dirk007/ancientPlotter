@@ -18,3 +18,9 @@ clean:
 all: clean directories
 	@echo "Building for $(ARCH) on $(OS)"
 	@$(all_build)
+
+daggerbuild:
+	dagger call build --src=. export --path=.
+
+dockerbuild:
+	docker build -t dirkfaust/ancientplotter:1.1.0 .

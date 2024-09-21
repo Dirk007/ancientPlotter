@@ -44,6 +44,13 @@ go will hopefully download all dependencies and place you a nice `ancientPlotter
 ./ancientPlotter
 ```
 
+### Building with `dagger`
+
+Invoke 
+```bash
+dagger call build --src=. 
+```
+
 ## Usage
 
 `ancientPlotter [--serial-device <device>] [--dry-run] [--print-only] [--serve] [--port <port> (default 11175)] filename.hpgl`

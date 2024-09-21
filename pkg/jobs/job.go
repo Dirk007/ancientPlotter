@@ -1,9 +1,13 @@
 package jobs
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
 
 	"github.com/Dirk007/ancientPlotter/pkg/feeder"
 	"github.com/Dirk007/ancientPlotter/pkg/normalizer"
@@ -45,6 +49,7 @@ func getWriterFor(config *JobConfig, deps *ContextDependencies) (serial.Writer, 
 		if err != nil {
 			return nil, err
 		}
+		deps.Logs.Broadcast(context.Background(), fmt.Sprintf("Guess: %s", guess))
 		portName = guess
 		fmt.Println(portName)
 	} else {
@@ -74,6 +79,34 @@ func (j PlotJob) Run(ctx context.Context, deps *ContextDependencies, config JobC
 	defer os.Remove(j.Path)
 
 	deps.Logs.Broadcast(ctx, fmt.Sprintf("Run job: %+v with config %+v", j, config))
+
+	ext := filepath.Ext(j.Path)
+	if ext != ".hpgl" {
+		deps.Logs.Broadcast(ctx, fmt.Sprintf("Trying to convert %s to hpgl...", j.Path))
+		cmd := exec.Command(
+			"/usr/bin/inkscape",
+			"--export-type=hpgl",
+			j.Path,
+		)
+		cmd.Dir = "/"
+		deps.Logs.Broadcast(ctx, fmt.Sprintf("Trying by %s...", cmd))
+		var out bytes.Buffer
+		var stderr bytes.Buffer
+		cmd.Stdout = &out
+		cmd.Stderr = &stderr
+		err := cmd.Run()
+		deps.Logs.Broadcast(ctx, fmt.Sprintf("Convert Err: %v", err))
+		if err != nil {
+			deps.Logs.Broadcast(ctx, fmt.Sprintf("Unable to convert: %v", err))
+			return err
+		}
+
+		deps.Logs.Broadcast(ctx, fmt.Sprintf("Convert: StdOut %s, StdErr %s", out.String(), stderr.String()))
+
+		j.Path = strings.Trim(j.Path, filepath.Ext(j.Path)) + ".hpgl"
+	}
+	defer os.Remove(j.Path)
+
 	content, err := os.ReadFile(j.Path)
 	if err != nil {
 		sendErrorStat(deps, err)

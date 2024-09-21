@@ -2,6 +2,7 @@ package serial
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
 	hwserial "go.bug.st/serial"
@@ -19,10 +20,14 @@ type SerialWriter struct {
 }
 
 func GuessPortName() (string, error) {
+	fmt.Println("Trying to guess serial port...  This may take a few seconds.")
 	ports, err := hwserial.GetPortsList()
 	if err != nil {
+		fmt.Printf("Failed to get serial ports: %v\n", err)
 		return "", err
 	}
+
+	fmt.Printf("Found ports: %+v\n", ports)
 
 	for _, port := range ports {
 		lower := strings.ToLower(port)
@@ -31,6 +36,7 @@ func GuessPortName() (string, error) {
 		}
 	}
 
+	fmt.Println("No port found that seems to be a serial port. Please check your device and try again. (Hint: try using 'ls /dev/tty*' or 'ls /dev/cu.*' on")
 	return "", errors.New("unable to guess the right serial port")
 }
 
