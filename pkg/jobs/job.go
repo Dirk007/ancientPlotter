@@ -90,7 +90,7 @@ func (j PlotJob) Run(ctx context.Context, deps *ContextDependencies, config JobC
 	if ext != ".hpgl" {
 		deps.Logs.Broadcast(ctx, fmt.Sprintf("Trying to convert %s to hpgl...", j.Path))
 		cmd := exec.Command(
-			"/usr/bin/inkscape",
+			"inkscape",
 			"--export-type=hpgl",
 			j.Path,
 		)
