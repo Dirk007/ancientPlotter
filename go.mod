@@ -6,11 +6,12 @@ go 1.23.0
 replace go.bug.st/serial => github.com/Dirk007/go-serial v0.0.0-20240907112601-b7483e31a79c
 
 require (
+	github.com/Dirk007/clapper v0.1.3
 	github.com/fred1268/go-clap v1.2.1
 	github.com/google/uuid v1.6.0
 	github.com/labstack/echo v3.3.10+incompatible
 	github.com/sirupsen/logrus v1.9.3
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.9.0
 	go.bug.st/serial v1.6.2
 	golang.org/x/net v0.29.0
 )
@@ -23,7 +24,7 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/stretchr/objx v0.5.0 // indirect
+	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	golang.org/x/crypto v0.27.0 // indirect

@@ -10,7 +10,7 @@ import (
 	"github.com/Dirk007/ancientPlotter/pkg/jobs"
 	"github.com/Dirk007/ancientPlotter/pkg/network"
 
-	"github.com/fred1268/go-clap/clap"
+	"github.com/Dirk007/clapper/pkg/clapper"
 )
 
 const defaultPort = 11175
@@ -18,16 +18,19 @@ const defaultPort = 11175
 var contextDeps = jobs.NewContextDependencies()
 
 type config struct {
-	DryRun       bool     `clap:"--dry-run,d"`
-	PrintOnly    bool     `clap:"--print-only,p"`
-	SerialDevice *string  `clap:"--serial-device,s"`
-	Serve        bool     `clap:"--serve,S"`
-	Port         int      `clap:"--port,P"`
-	Filenames    []string `clap:"trailing"`
+	DryRun       bool    `clapper:"long,help='Keep the cutter floating'"`
+	PrintOnly    bool    `clapper:"long,short,help='Just dump the plot to the console'"`
+	SerialDevice *string `clapper:"long,short,help='Serial device to use for cutting'"`
+	Serve        bool    `clapper:"long,short=S,help='Start a server to receive and display plots'"`
+	Port         int     `clapper:"long,short=P,default=11175,help='Port to listen on for plots'"`
+
+	Help bool `clapper:"long,short=,help='Show this help and exit'"`
 }
 
-func spinUpLogPrinter(ctx context.Context) {
+func spinUpLogPrinter(ctx context.Context, wg *sync.WaitGroup) {
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		idLog, logChannel := contextDeps.Logs.Register()
 		idStats, statsChannel := contextDeps.Stats.Register()
 		defer contextDeps.Logs.Remove(idLog)
@@ -74,8 +77,10 @@ func serve(_ context.Context, config *config) {
 	})
 }
 
-func alive(ctx context.Context) {
+func alive(ctx context.Context, wg *sync.WaitGroup) {
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		for {
 			select {
 			case <-ctx.Done():
@@ -92,52 +97,66 @@ func log(ctx context.Context, content string) {
 	contextDeps.Logs.Broadcast(ctx, content)
 }
 
+func showHelp() {
+	fmt.Fprintln(os.Stderr, "Usage: ancient-plotter [options] <input-files>")
+	s, _ := clapper.HelpDefault(new(config))
+	fmt.Fprintln(os.Stderr, s)
+}
+
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	config := &config{}
-	_, err := clap.Parse(os.Args, config)
+	filenames, err := clapper.Parse(config)
 	if err != nil {
 		errorExit(err)
 	}
 
-	spinUpLogPrinter(ctx)
-	alive(ctx)
+	if config.Help {
+		showHelp()
+		os.Exit(0)
+	}
+
+	wg := &sync.WaitGroup{}
+	spinUpLogPrinter(ctx, wg)
+	alive(ctx, wg)
 
 	if config.Serve {
-		wg := &sync.WaitGroup{}
 		wg.Add(1)
 		serve(ctx, config)
 		wg.Wait()
+		os.Exit(0)
 	}
 
-	if len(config.Filenames) == 0 {
+	if len(filenames) == 0 {
 		errorExit(fmt.Errorf("no input files provided"))
 	}
 
+	wg.Add(1)
 	go func() {
-		job := jobs.NewPlotJob(config.Filenames[0])
-		job.Run(ctx, contextDeps, jobs.JobConfig{
+		defer wg.Done()
+		job := jobs.NewPlotJob(filenames[0])
+		err = job.Run(ctx, contextDeps, jobs.JobConfig{
+			CLIJob:       true,
 			DryRun:       config.DryRun,
 			PrintOnly:    config.PrintOnly,
 			SerialDevice: config.SerialDevice,
 		})
+		if err != nil {
+			errorExit(err)
+		}
+		log(ctx, "Hit return *after* the plotter has completed the job.")
 	}()
 
-	log(ctx, "Hit return *after* the plotter has completed the job.")
 	var dontcare string
 	_, _ = fmt.Scanln(&dontcare)
 
 	log(ctx, "canceling...")
 	cancel()
+	wg.Wait()
 	ctx = context.Background()
 	log(ctx, "done")
-
-	time.Sleep(time.Second * 5) // Allow the last log message to be printed before exiting
-
-	// -> Vereinfachen, Kombinieren, Vereinigung <--
-	// -> Vereinigung, Vereinfachen <-- Besser
 
 	log(ctx, "Done.")
 }

@@ -17,6 +17,7 @@ import (
 )
 
 type JobConfig struct {
+	CLIJob       bool
 	DryRun       bool
 	PrintOnly    bool
 	SerialDevice *string
@@ -76,7 +77,12 @@ func sendErrorStat(deps *ContextDependencies, err error) {
 }
 
 func (j PlotJob) Run(ctx context.Context, deps *ContextDependencies, config JobConfig) error {
-	defer os.Remove(j.Path)
+	defer func() {
+		if config.CLIJob {
+			return
+		}
+		os.Remove(j.Path)
+	}()
 
 	deps.Logs.Broadcast(ctx, fmt.Sprintf("Run job: %+v with config %+v", j, config))
 
@@ -104,8 +110,8 @@ func (j PlotJob) Run(ctx context.Context, deps *ContextDependencies, config JobC
 		deps.Logs.Broadcast(ctx, fmt.Sprintf("Convert: StdOut %s, StdErr %s", out.String(), stderr.String()))
 
 		j.Path = strings.Trim(j.Path, filepath.Ext(j.Path)) + ".hpgl"
+		defer os.Remove(j.Path)
 	}
-	defer os.Remove(j.Path)
 
 	content, err := os.ReadFile(j.Path)
 	if err != nil {
@@ -143,8 +149,10 @@ func (j PlotJob) Run(ctx context.Context, deps *ContextDependencies, config JobC
 		return err
 	}
 
-	deps.Logs.Broadcast(ctx, "Waiting for final cancel after plot is finished")
-	_ = <-ctx.Done()
+	if !config.CLIJob {
+		deps.Logs.Broadcast(ctx, "Waiting for final cancel after plot is finished")
+		_ = <-ctx.Done()
+	}
 	deps.Logs.Broadcast(context.Background(), "Finished job: "+j.ID)
 
 	return nil
